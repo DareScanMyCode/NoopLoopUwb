@@ -1,7 +1,7 @@
 # NOOPLOOP UWB protocol
 ## Introduction
 1. Recv from `dev` and decode the msg(Only `NLink_LinkTrack_Node_Frame5` now)
-2. Send to others what I received through `NLink_LinkTrack_User_Frame1`, with Payload `UserPayload1`:
+2. Send to others what I received through `NLink_LinkTrack_User_Frame1`, with Payload `UserPayloadNeighDis`:
 
 | Data | Type | length | Description |
 | :-- | :-- | :-- | -- |
@@ -12,6 +12,11 @@
 3. Using `MovingAverageFilter' filter the distance
 4. Raise two adi_matrixes `adj_matrix_raw` and `adj_matrix_filtered`
 
+- `UserPayload`
+| Data | Type | length | Description |
+| :-- | :-- | :-- | -- |
+| MsgID | u8 | 1 | User msg ID |
+| Payload | string | 1 | Real payload |
 ## How to use
 1. Packages need
 ```bash
