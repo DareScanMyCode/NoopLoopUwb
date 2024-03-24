@@ -2,6 +2,7 @@
 ## Introduction
 1. Recv from `dev` and decode the msg(Only `NLink_LinkTrack_Node_Frame5` now)
 2. Send to others what I received through `NLink_LinkTrack_User_Frame1`, with Payload `UserPayload1`:
+
 | Data | Type | length | Description |
 | :-- | :-- | :-- | -- |
 | role_from | u8 | 1 | distance to role_to measured by role_from |
