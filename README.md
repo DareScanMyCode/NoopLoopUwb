@@ -1,22 +1,12 @@
 # NOOPLOOP UWB protocol
+version=0.1.0\
+Not compatible with the initial version.
 ## Introduction
 1. Recv from `dev` and decode the msg(Only `NLink_LinkTrack_Node_Frame5` now)
-2. Send to others what I received through `NLink_LinkTrack_User_Frame1`, with Payload `UserPayloadNeighDis`:
-
-| Data | Type | length | Description |
-| :-- | :-- | :-- | -- |
-| role_from | u8 | 1 | distance to role_to measured by role_from |
-| role_to | u8 | 1 | distance to role_to measured by role_from |
-| dis_raw | f32 | 4 | raw distance |
-| dis_filtered | f32 | 4 | filtered distance(MovingAverage) |
+2. Send to others what I received through `NLink_LinkTrack_User_Frame1`, with Payload `UserPayloadNeighDis` of [`UserPayload`](## User Frames):
 3. Using `MovingAverageFilter' filter the distance
 4. Raise two adi_matrixes `adj_matrix_raw` and `adj_matrix_filtered`
 
-- `UserPayload`
-| Data | Type | length | Description |
-| :-- | :-- | :-- | -- |
-| MsgID | u8 | 1 | User msg ID |
-| Payload | string | 1 | Real payload |
 ## How to use
 1. Packages need
 ```bash
@@ -42,6 +32,19 @@ while True:
         uwb1.should_stop = True
         uwb2.should_stop = True
 ```
+## User Frames
+- `UserPayload`
+| Data | Type | length | Description |
+| :-- | :-- | :-- | -- |
+| MsgID | u8 | 1 | User msg ID |
+| Payload | string | n | Real payload |
+- `UserPayloadNeighDis`
+| Data | Type | length | Description |
+| :-- | :-- | :-- | -- |
+| role_from | u8 | 1 | distance to role_to measured by role_from |
+| role_to | u8 | 1 | distance to role_to measured by role_from |
+| dis_raw | f32 | 4 | raw distance |
+| dis_filtered | f32 | 4 | filtered distance(MovingAverage) |
 
 ## Notice
 1. The adj matrixes are **NOT symmetric**, since maybe A measured a distance of 0.555m to B, B measured 0.666 to A due to the noise. `0` will get if no distance measured.

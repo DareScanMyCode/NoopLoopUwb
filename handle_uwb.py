@@ -1,3 +1,6 @@
+VERSION = "0.1.0"
+import warnings
+warnings.warn(f"UWB version: {VERSION}, this version is not compatible with the previous version.")
 import struct
 import threading
 import time
@@ -180,13 +183,18 @@ class LinkTrackUserNodeFrame1:
 
     
 class NoopLoopUWB:
-    def __init__(self, dev='/dev/ttyUAB0', log_ON = False, max_neigh_num=5, send_fps=20) -> None:
+    def __init__(self, dev='/dev/ttyUAB0', log_ON = False, max_neigh_num=5, send_dist=False,send_fps=20) -> None:
         self.dev = dev
         self.role = -1
         self._id = -1
         self.log_ON = log_ON
-        self.send_fps = send_fps
-        self.time_delay_send = 1.0 / self.send_fps
+        self.send_dist = send_dist
+        if self.send_dist:
+            self.send_fps = send_fps
+            self.time_delay_send = 1.0 / self.send_fps
+        else:
+            self.send_fps = None
+            self.time_delay_send = None
         self.should_stop = False
         # 构造一个历史队列，用于存储历史数据
         self.node_num = -1
@@ -201,8 +209,9 @@ class NoopLoopUWB:
         self.listen_t_thread = threading.Thread(target=self.listen_t)
         self.listen_t_thread.start()
         
-        self.send_t_thread = threading.Thread(target=self.send_t)
-        self.send_t_thread.start()
+        if self.send_dist:
+            self.send_t_thread = threading.Thread(target=self.send_dist_t)
+            self.send_t_thread.start()
         pass
     
     def update_dis_matrix(self, matrix, role_from, role_to, dis):
@@ -212,7 +221,7 @@ class NoopLoopUWB:
     def send(self, msg):
         self.ser.write(msg)
     
-    def send_t(self):
+    def send_dist_t(self):
         while self.role == -1:
             try:
                 time.sleep(0.2)
