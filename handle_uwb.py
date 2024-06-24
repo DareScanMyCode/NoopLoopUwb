@@ -214,6 +214,25 @@ class NoopLoopUWB:
             self.send_t_thread.start()
         pass
     
+    def get_raw_dist_matrix(self):
+        return self.adj_matrix_raw
+    
+    def get_filtered_dist_matrix(self):
+        return self.adj_matrix_filtered
+    
+    def get_dist2neigh(self, role):
+        if self._id == -1:
+            warnings.warn("The node id is not set yet!")
+            return -1
+        return self.get_dist(self._id, role)
+    
+    def get_dist(self, role_from, role_to):
+        if role_from >= self.max_neigh_num or role_to >= self.max_neigh_num:
+            warnings.warn("The role number is out of range!")
+            return -1
+        return self.adj_matrix_raw[role_from][role_to]
+    
+    
     def update_dis_matrix(self, matrix, role_from, role_to, dis):
         matrix[role_from][role_to] = dis
         # matrix[role_to][role_from] = dis
