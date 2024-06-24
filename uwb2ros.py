@@ -25,19 +25,12 @@ def mat2ros_mat(matrix):
     
     return matrix_msg
 
-if __name__ == "__main__":
-    # 读取参数：串口号、topic名称
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=str, default='/dev/ttyS4', help='串口号')
-    parser.add_argument('--topic', type=str, default='uwb', help='topic名称')
-    args = parser.parse_args()
-    
-    # initiate node
-    rospy.init_node('uwb2ros', anonymous=True)
+
+def uwv2ros(args):
     
     # 矩阵的publisher
-    raw_dist_mtx_pub = rospy.Publisher('raw_dist', Float32MultiArray, queue_size=10)
-    filtered_dist_mtx_pub = rospy.Publisher('filtered_dist_mtx_pub', Float32MultiArray, queue_size=10)
+    raw_dist_mtx_pub = rospy.Publisher(args.uwb_raw_topic, Float32MultiArray, queue_size=10)
+    filtered_dist_mtx_pub = rospy.Publisher(args.uwb__filtered_topic, Float32MultiArray, queue_size=10)
     
     # 实例化类
     uwb = NoopLoopUWB(args.port, log_ON=True)
@@ -52,7 +45,23 @@ if __name__ == "__main__":
             filtered_dist_matrix_msg = mat2ros_mat(filtered_dist_mtx)
             
             raw_dist_mtx_pub.publish(raw_dist_matrix_msg)
-            filtered_dist_matrix_msg.publish(filtered_dist_matrix_msg)
+            filtered_dist_mtx_pub.publish(filtered_dist_matrix_msg)
         except KeyboardInterrupt:
             print("任务结束")
             break
+        
+        
+if __name__ == "__main__":
+    # 读取参数：串口号、topic名称
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=str, default='/dev/ttyS4', help='串口号')
+    parser.add_argument('--uwb_raw_topic', type=str, default='uwb_raw', help='topic名称')
+    parser.add_argument('--uwb__filtered_topic', type=str, default='uwb_filtered', help='topic名称')
+    args = parser.parse_args()
+    
+    # initiate node
+    rospy.init_node('uwb2ros', anonymous=True)
+    
+    uwv2ros(args)
+    
+    
