@@ -5,8 +5,8 @@ import struct
 import threading
 import time
 import serial
-from .functions import MovingAverageFilter
-
+# from .functions import MovingAverageFilter
+from functions import MovingAverageFilter
 NODE = 0
 ANCHOR = 1 
 TAG = 2
@@ -39,7 +39,38 @@ class UwbNighNode:
     def get_filtered_dis(self):
         return self.filtered_dis
     
-    
+
+class LinkTrackAoaNode3:
+    def __init__(self, role, _id, dis1, dis2, dis3, fp_rssi, rx_rssi):
+        self.role = role
+        self._id = _id
+        self.dis1 = dis1
+        self.dis2 = dis2
+        self.dis3 = dis3
+        # int32_t temp = (int32_t)(byte[0] << 8 | byte[1] << 16 | byte[2] << 24) / 256;
+        temp = ((dis3 << 24) | (dis2 << 16) | (dis1 << 8))
+        self.dis = temp/256.0/1000.0 # unit:m
+        self.angle = None
+        self.fp_rssi = fp_rssi
+        self.rx_rssi = rx_rssi
+
+    @classmethod
+    def unpack(cls, data):
+        """
+        typedef struct {
+            uint8_t role;
+            uint32_t id;
+            nint24_t dis;
+            uint8_t fp_rssi;
+            uint8_t rx_rssi;
+        } nlt_nodeframe5_node_raw_t;
+        """
+        # print(len(data))
+        unpacked_data = struct.unpack('<BBBBBBB', data)
+        # print(unpacked_data)
+        return cls(*unpacked_data)
+
+
 class LinkTrackAoaNode5:
     def __init__(self, role, _id, dis1, dis2, dis3, fp_rssi, rx_rssi):
         self.role = role
@@ -98,8 +129,8 @@ class LinkTrackAoaNodeFrame3:
 
         nodes = []
         for i in range(valid_node_count):
-            node, node_data = node_data[:10], node_data[10:]
-            nodes.append(LinkTrackAoaNode5.unpack(node))
+            node, node_data = node_data[:7], node_data[7:]
+            nodes.append(LinkTrackAoaNode3.unpack(node))
 
         return cls(role, _id, local_time, system_time, reserved0, voltage, nodes)
     
@@ -216,7 +247,7 @@ class LinkTrackUserNodeFrame1:
 
     
 class NoopLoopUWB:
-    def __init__(self, dev='/dev/ttyUAB0', log_ON = False, max_neigh_num=5, send_dist=False,send_fps=20) -> None:
+    def __init__(self, dev='/dev/ttyUAB0', log_ON = False, max_neigh_num=10, send_dist=False,send_fps=20) -> None:
         self.dev = dev
         self.role = -1
         self._id = -1
@@ -267,6 +298,7 @@ class NoopLoopUWB:
     
     
     def update_dis_matrix(self, matrix, role_from, role_to, dis):
+        # print(role_from, role_to)
         matrix[role_from][role_to] = dis
         # matrix[role_to][role_from] = dis
         
@@ -451,7 +483,7 @@ def test_data_trans():
 
 if __name__ == "__main__":
     uwb1 = NoopLoopUWB('COM3', log_ON = False)
-    uwb2 = NoopLoopUWB('COM5', log_ON = False)
+    # uwb2 = NoopLoopUWB('COM5', log_ON = False)
     
     import tkinter as tk
 
@@ -460,12 +492,12 @@ if __name__ == "__main__":
     root.title("4x4 Number Matrix")
 
     # 初始化4x4的矩阵
-    matrix = [[None for _ in range(4)] for _ in range(4)]
+    matrix = [[None for _ in range(10)] for _ in range(10)]
 
     # 创建一个函数来填充矩阵的值
     def fill_matrix(custom_values):
-        for i in range(4):
-            for j in range(4):
+        for i in range(10):
+            for j in range(10):
                 if matrix[i][j] is not None:
                     matrix[i][j].delete(0, tk.END)  # 清空现有值
                 else:
@@ -488,7 +520,7 @@ if __name__ == "__main__":
             time.sleep(0.2)
         except KeyboardInterrupt:
             uwb1.should_stop = True
-            uwb2.should_stop = True
+            # uwb2.should_stop = True
             break
     # test_data_trans()
     
