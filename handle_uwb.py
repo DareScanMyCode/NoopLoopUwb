@@ -5,7 +5,7 @@ import struct
 import threading
 import time
 import serial
-from functions import MovingAverageFilter
+from .functions import MovingAverageFilter
 
 NODE = 0
 ANCHOR = 1 
@@ -70,6 +70,39 @@ class LinkTrackAoaNode5:
         # print(unpacked_data)
         return cls(*unpacked_data)
 
+class LinkTrackAoaNodeFrame3:
+    def __init__(self, role, _id, local_time, system_time, reserved0, voltage, nodes):
+        self.role = role
+        self._id = _id
+        self.local_time = local_time
+        self.system_time = system_time
+        self.reserved0 = reserved0
+        self.voltage = voltage / 1000.
+        self.nodes = nodes
+
+    @classmethod
+    def unpack(cls, data):
+        """
+        uint8_t role;
+        uint32_t id;
+        uint32_t local_time;
+        uint32_t system_time;
+        uint8_t reserved0[4];
+        uint16_t voltage;
+        uint8_t valid_node_count;
+        """
+        header_data = struct.unpack('<BBIIIHB', data[:17])
+        role, _id, local_time, system_time,reserved0, voltage,valid_node_count = header_data
+        # print(header_data)
+        node_data = data[17:]
+
+        nodes = []
+        for i in range(valid_node_count):
+            node, node_data = node_data[:10], node_data[10:]
+            nodes.append(LinkTrackAoaNode5.unpack(node))
+
+        return cls(role, _id, local_time, system_time, reserved0, voltage, nodes)
+    
 class LinkTrackAoaNodeFrame5:
     def __init__(self, role, _id, local_time, system_time, reserved0, voltage, nodes):
         self.role = role
@@ -279,6 +312,23 @@ class NoopLoopUWB:
 
                         # 解析帧
                         link_track_frame = LinkTrackAoaNodeFrame5.unpack(frame_data)
+                        count = count + 1
+                        
+                        # 更新自身ID
+                        self._id = link_track_frame._id
+                        self.role = link_track_frame.role
+                    elif frame_header2 == b'\x05':
+                        # frame 3
+                        # 读取两字节的帧长度
+                        frame_length = struct.unpack('<H', self.ser.read(2))[0]
+                        
+                        # 读取整个帧
+                        frame_data = self.ser.read(frame_length-4)
+                        # print(f"frame_length: {frame_length}")
+                        
+
+                        # 解析帧
+                        link_track_frame = LinkTrackAoaNodeFrame3.unpack(frame_data)
                         count = count + 1
                         
                         # 更新自身ID
