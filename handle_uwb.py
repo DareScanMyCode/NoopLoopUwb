@@ -5,8 +5,8 @@ import struct
 import threading
 import time
 import serial
-# from .functions import MovingAverageFilter
-from functions import MovingAverageFilter
+from .functions import MovingAverageFilter
+# from functions import MovingAverageFilter
 NODE = 0
 ANCHOR = 1 
 TAG = 2
